@@ -150,3 +150,7 @@ class ClassCovariances(ClassAccumulator):
             squares = [np.dot(sq, direction) for sq, direction in zip(squares, directions)]
             variances[target] = np.array(squares)
         return variances
+
+# Global list of models.
+models = [ClassAccumulator, ClassMeans, ClassCovariances] 
+

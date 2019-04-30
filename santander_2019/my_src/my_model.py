@@ -177,3 +177,6 @@ class BestDirectionsSquares:
         X = self.reduce_squares(X)
         return X
 
+# List of classes that are models. Useful for JSON encoding/decoding.
+models = [BestDirectionsSquares, StandardScaler, LogisticRegression]
+

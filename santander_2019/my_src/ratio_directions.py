@@ -125,3 +125,7 @@ def quick_tune_reduced(X, n_components):
 
     X_new = np.concatenate([X_keep, X_size], axis = -1)
     return X_new 
+
+# Global list of models.
+models = [RatioDirections]
+
