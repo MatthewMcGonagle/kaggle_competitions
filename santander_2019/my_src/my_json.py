@@ -1,5 +1,5 @@
 import json
-import my_model
+from my_src import my_model
 import numpy as np
 
 from sklearn.preprocessing import StandardScaler

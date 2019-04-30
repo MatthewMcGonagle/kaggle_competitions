@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression 
 from sklearn.preprocessing import StandardScaler
 
-import class_stats
-import ratio_directions
+from my_src import class_stats
+from my_src import ratio_directions
 
 class BestDirectionsSquares:
     '''
