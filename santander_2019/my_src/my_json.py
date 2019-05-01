@@ -1,12 +1,11 @@
 import json
 import numpy as np
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+from sklearn.base import BaseEstimator
 
 from my_src import (my_model, class_stats, ratio_directions)
 
-models = my_model.models + class_stats.models + ratio_directions.models
+models = my_model.models + class_stats.models + ratio_directions.models + [BaseEstimator]
 models = {x.__name__ : x for x in models} 
 
 # Remember that custom JSON encoders return objects that are JSON serializable
@@ -29,25 +28,42 @@ class MyModelEncoder(json.JSONEncoder):
            return MyNumpyEncoder().default(obj)
         elif MyModelEncoder._is_model(obj) or MyModelEncoder._is_dict(obj):
             encoding = {'__class__' : obj.__class__.__name__}
-            if not MyModelEncoder._is_dict(obj):
-                to_encode = obj.__dict__
-            else:
+            if MyModelEncoder._is_dict(obj):
                 to_encode = obj
+            else:
+                to_encode = obj.__dict__
 
             for key in to_encode.keys():
                  item = to_encode[key]
                  if MyModelEncoder._is_model(item) or MyModelEncoder._is_dict(item):
                      item = MyModelEncoder().default(item)
                  encoding[key] = item
+            drop_duplicate_encoding(obj, encoding)
             return encoding
         else: # Use the default to raise a type error.
            json.JSONEncoder.default(self, obj)
            
     def _is_model(obj):
-        return obj.__class__.__name__ in models.keys()
+        return any(isinstance(obj, model) for _, model in  models.items()) 
 
     def _is_dict(obj):
         return obj.__class__ == {}.__class__
+
+def drop_duplicate_encoding(obj, encoding):
+    
+    if isinstance(obj, my_model.BestDirectionsSquares):
+        # These are already encoded as members of BestDirectionsSquares, so can
+        # set references to None inside sub-model. Just remember to reset
+        # references when decoding.
+        if not '_class_means' in encoding['sub_models']['class_cov'].keys():
+            raise Exception('_class_means not in sub_models[\'class_cov\'] keys')
+        else:
+            encoding['sub_models']['class_cov']['_class_means'] = None
+
+        if not '_class_cov' in encoding['sub_models']['ratio_directions'].keys():
+            raise Exception('_class_cov not in sub_models[\'ratio_directions\'] keys')
+        else:
+            encoding['sub_models']['ratio_directions']['_class_cov'] = None
 
 # Remeber that object hook function is called as the decoder for every nested dictionary in the
 # JSON encoding.
@@ -67,6 +83,8 @@ def as_model(dct):
         # (i.e. before fitting). So we need to iterate over dct.keys() after popping the class.
         for key in dct.keys():
             model.__dict__[key] = dct[key]
+        if isinstance(model, my_model.BestDirectionsSquares):
+            make_sub_model_cross_references(model)
         return model 
 
     elif dct['__class__'] == np.ndarray.__name__:
@@ -78,3 +96,7 @@ def as_model(dct):
     else:
         raise Exception('Don\'t know how to decode ', dct['__class__'])
 
+def make_sub_model_cross_references(model):
+
+    model.sub_models['class_cov'].set_class_means(model.sub_models['class_means'])
+    model.sub_models['ratio_directions'].set_class_covariances(model.sub_models['class_cov'])
