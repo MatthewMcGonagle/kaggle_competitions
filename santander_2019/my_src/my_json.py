@@ -28,10 +28,11 @@ class MyModelEncoder(json.JSONEncoder):
            return MyNumpyEncoder().default(obj)
 
         elif MyModelEncoder._is_model(obj) or MyModelEncoder._is_dict(obj):
-            encoding = {'__class__' : obj.__class__.__name__}
             if MyModelEncoder._is_dict(obj):
+                encoding = {}
                 to_encode = obj
             else:
+                encoding = {'__class__' : obj.__class__.__name__}
                 to_encode = obj.__dict__
 
             for key, item in to_encode.items():
@@ -76,7 +77,7 @@ def as_full_model(estimator_type):
  
 def as_model(dct, estimator_type = None.__class__):
 
-    if '__class__' not in dct.keys() or dct['__class__'] == {}.__class__.__name__:
+    if '__class__' not in dct.keys():
         return dct
 
     elif dct['__class__'] in models.keys() or dct['__class__'] == estimator_type.__name__:
