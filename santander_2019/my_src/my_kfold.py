@@ -4,18 +4,19 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 
-class StratifiedKFoldReaderIndices:
+class SplitReaderIndices:
 
     def __init__(self, filename, index_col, chunk_size, target_name = 'target', 
-                 kfold = 5, random_state = np.random.RandomState(), verbose = True):
+                 splitter = StratifiedKFold(5), verbose = True):
         self.filename = filename
         self.index_col = index_col
         self.chunk_size = chunk_size
         self.target_name = target_name
-        self.kfold = kfold
+        self.splitter = splitter 
 
         reader = pd.read_csv(filename, index_col = index_col, chunksize = chunk_size) 
-        stratified_kfold = StratifiedKFold(kfold, random_state = random_state)
+        #stratified_kfold = StratifiedShuffleSplit(kfold, random_state = random_state) 
+                #StratifiedKFold(kfold, random_state = random_state)
         chunk_train = []
         chunk_test = []
 
@@ -30,7 +31,7 @@ class StratifiedKFoldReaderIndices:
             y = chunk[target_name] 
             new_train_kfold = []
             new_test_kfold = []
-            for train_i, test_i in stratified_kfold.split(x, y):
+            for train_i, test_i in splitter.split(x, y):
                 new_train_kfold.append(x[train_i])
                 new_test_kfold.append(x[test_i])
             chunk_train.append(new_train_kfold)
@@ -40,7 +41,7 @@ class StratifiedKFoldReaderIndices:
         self.chunk_test = chunk_test
 
     def __iter__(self):
-        return StratifiedKFoldReader(self)
+        return SplitReader(self)
             
     def get_train(self):
         return self.chunk_train
@@ -49,19 +50,19 @@ class StratifiedKFoldReaderIndices:
         return self.chunk_test  
 
     def concatenate_chunks(self):
-        train_totals = [[] for _ in range(self.kfold)]
-        test_totals = [[] for _ in range(self.kfold)]
-        for folds in chunk_train:
+        train_totals = [[] for _ in range(self.splitter.n_splits)]
+        test_totals = [[] for _ in range(self.splitter.n_splits)]
+        for folds in self.chunk_train:
             for new_indices, total in zip(folds, train_totals):
                 total.extend(new_indices) 
 
-        for folds in chunk_test:
+        for folds in self.chunk_test:
             for new_indices, total in zip(folds, test_totals):
                 total.extend(new_indices)
 
         return train_totals, test_totals
              
-class StratifiedKFoldReader:
+class SplitReader:
 
     def __init__(self, split_indices): 
         self.reader = pd.read_csv(split_indices.filename, index_col = split_indices.index_col, 
@@ -81,9 +82,9 @@ class StratifiedKFoldReader:
         chunk_test = self.split_indices.get_test()[self.chunk_i]
         self.chunk_i += 1
 
-        return StratifiedKFoldChunk(chunk, chunk_train, chunk_test, target_name) 
+        return ChunkSplits(chunk, chunk_train, chunk_test, target_name) 
          
-class StratifiedKFoldChunk:
+class ChunkSplits:
 
     def __init__(self, chunk, chunk_train, chunk_test, target_name): 
 
