@@ -26,6 +26,7 @@ class MyModelEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (np.ndarray, np.int64)):
            return MyNumpyEncoder().default(obj)
+
         elif MyModelEncoder._is_model(obj) or MyModelEncoder._is_dict(obj):
             encoding = {'__class__' : obj.__class__.__name__}
             if MyModelEncoder._is_dict(obj):
@@ -33,13 +34,13 @@ class MyModelEncoder(json.JSONEncoder):
             else:
                 to_encode = obj.__dict__
 
-            for key in to_encode.keys():
-                 item = to_encode[key]
+            for key, item in to_encode.items():
                  if MyModelEncoder._is_model(item) or MyModelEncoder._is_dict(item):
                      item = MyModelEncoder().default(item)
                  encoding[key] = item
             drop_duplicate_encoding(obj, encoding)
             return encoding
+
         else: # Use the default to raise a type error.
            json.JSONEncoder.default(self, obj)
            
@@ -47,7 +48,7 @@ class MyModelEncoder(json.JSONEncoder):
         return any(isinstance(obj, model) for _, model in  models.items()) 
 
     def _is_dict(obj):
-        return obj.__class__ == {}.__class__
+        return isinstance(obj, {}.__class__)#obj.__class__ == {}.__class__
 
 def drop_duplicate_encoding(obj, encoding):
     
@@ -68,16 +69,21 @@ def drop_duplicate_encoding(obj, encoding):
 # Remeber that object hook function is called as the decoder for every nested dictionary in the
 # JSON encoding.
 
-def as_model(dct):
+def as_full_model(estimator_type):
+    def new_obj_hook(dct):
+        return as_model(dct, estimator_type)
+    return new_obj_hook
+ 
+def as_model(dct, estimator_type = None.__class__):
 
-    if '__class__' not in dct.keys():
-        raise Exception('__class__ not in dictionary keys:', dct.keys())
-
-    elif dct['__class__'] == {}.__class__.__name__:
+    if '__class__' not in dct.keys() or dct['__class__'] == {}.__class__.__name__:
         return dct
 
-    elif dct['__class__'] in models.keys():
-        model = models[dct['__class__']]() 
+    elif dct['__class__'] in models.keys() or dct['__class__'] == estimator_type.__name__:
+        if dct['__class__'] == estimator_type.__name__:
+            model = estimator_type()
+        else: 
+            model = models[dct['__class__']]() 
         dct.pop('__class__')
         # For sklearners, some attributes of a fitted model are not found in an initial instance
         # (i.e. before fitting). So we need to iterate over dct.keys() after popping the class.
@@ -94,6 +100,7 @@ def as_model(dct):
         return np.int64(dct['data'])
 
     else:
+        print(dct['__class__'], estimator_type.__name__)
         raise Exception('Don\'t know how to decode ', dct['__class__'])
 
 def make_sub_model_cross_references(model):
