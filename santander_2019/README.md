@@ -31,6 +31,13 @@ are class 0 or class 1 (probability less than the cut-off is class 0 and similar
 
 ## Files
 
+The main directory contains two notebooks:
+
+* `BestDirectionsModel.ipynb` - This notebook has the training of the model, the decision of the final predictor,
+and the encoding of the model into a json file. 
+* `BestDirectionsModel_tests.ipynb` - This notebook decodes the JSON format of the model, double checks the
+training score to make sure the decoding worked, and then makes predictions on the testing dataset. 
+
 ### data/ 
 
 This sub-directory is where the project's data should go. For space concerns, the data isn't tracked by git.
