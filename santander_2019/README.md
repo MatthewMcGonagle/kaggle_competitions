@@ -48,3 +48,7 @@ This sub-directory contains source files for classes that make up our model's tr
 also has classes to help with doing k-fold cross-validation across minibatches of our data and with using
 JSON encoding/decoding for model persistence.
 
+### predictions/
+
+This sub-directory contains the predictions made by the model. For space concerns, the predictions aren't
+actually tracked by git.
