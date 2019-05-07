@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator
 from my_src import (my_model, class_stats, ratio_directions)
 
 # What is recognized as being a model by the model encoder/decoder.
-MODELS = my_model.models + class_stats.models + ratio_directions.models + [BaseEstimator]
+MODELS = my_model.models + class_stats.MODELS + ratio_directions.models + [BaseEstimator]
 MODELS = {x.__name__ : x for x in MODELS}
 
 # Remember that custom JSON encoders return objects that are JSON serializable
