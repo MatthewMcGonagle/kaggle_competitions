@@ -20,6 +20,10 @@ that will reduce the data a small number of interesting features.
 After reducing the dimensionality of the data, we will be able to fit it into memory. Then we will train
 a predictor on the entirety of the reduced data.
 
+For example, here is the distribution of the reduced features for one our cross-validation training folds:
+
+![Distribution of Reduced Features](graphs/2d_distribution.svg)
+
 ## Metric
 
 The data contains a proportionately small number of repeat transactions (targets of class 1). So accuracy
@@ -30,6 +34,10 @@ Instead the model is scored using the Area Under the Receiver Operator Character
 measures the trade off between increasing the true positive rate and increasing the false positive rate. 
 That is, it measures this tradeoff as you change the cut-off level to determine when you
 are class 0 or class 1 (probability less than the cut-off is class 0 and similar for larger).
+
+For example, here are the ROC curves for the cross-validation tests of the final model:
+
+![cross-validation ROC curves](graphs/cv_roc_curves.svg)
 
 ## Files
 
